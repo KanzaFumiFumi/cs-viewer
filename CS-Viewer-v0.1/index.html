@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS-Viewer</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <h1>CS-Viewer</h1>
+  <p class="sub">地上局のCSV（GS_000.csv など）から、ノード間の電波強度をグラフにします</p>
+</header>
+<main>
+  <section class="load">
+    <label id="drop" class="drop" for="file">
+      <input id="file" type="file" accept=".csv,text/csv" multiple>
+      <span class="drop-main">CSVファイルをここにドラッグ＆ドロップ</span>
+      <span class="drop-sub">またはクリックして選択（複数可）</span>
+    </label>
+    <p id="error" class="error" role="alert" hidden></p>
+  </section>
+  <section id="viewer" hidden>
+    <div class="controls">
+      <div class="group">
+        <span class="group-label">ファイル</span>
+        <div id="files" class="chips" role="tablist" aria-label="読み込んだファイル"></div>
+      </div>
+      <div class="group">
+        <span class="group-label">グラフ</span>
+        <div class="chips" role="tablist" aria-label="グラフの分け方">
+          <button type="button" class="chip" role="tab" data-view="pair" aria-selected="true">ペア別（6）</button>
+          <button type="button" class="chip" role="tab" data-view="all" aria-selected="false">全体（1）</button>
+          <button type="button" class="chip" role="tab" data-view="node" aria-selected="false">測定ノード別（4）</button>
+        </div>
+      </div>
+    </div>
+    <p id="info" class="info"></p>
+    <p class="hint">ドラッグで拡大、ダブルクリックで元に戻す。凡例をクリックすると線の表示・非表示を切り替えます。</p>
+    <div id="charts" class="charts"></div>
+    <details class="table-view">
+      <summary>数値の表（各リンクの平均・最小・最大）</summary>
+      <div class="table-wrap"><table id="stats"></table></div>
+    </details>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
