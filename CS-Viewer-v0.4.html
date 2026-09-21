@@ -1,0 +1,1798 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS-Viewer</title>
+<style>
+:root {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #ffffff;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --accent: #3987e5;
+  --accent-wash: rgba(57, 135, 229, 0.10);
+  --critical: #d03b3b;
+  --bear: #e5484d;
+  --bear-wash: rgba(229, 72, 77, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.top {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 24px 4px;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 24px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.sub {
+  margin: 2px 0 0;
+  color: var(--ink-2);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.tab {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 8px 24px 40px;
+}
+
+.drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 18px;
+  border: 1px dashed var(--axis);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 120ms, background-color 120ms;
+}
+
+.drop:hover,
+.drop.over {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.drop:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.drop input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.drop-main {
+  font-weight: 600;
+}
+
+.drop-sub {
+  color: var(--muted);
+}
+
+.error {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--critical);
+  background: var(--surface);
+  color: var(--ink);
+  white-space: pre-line;
+}
+
+.error::before {
+  content: "⚠ ";
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+  margin: 18px 0 6px;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.group-label {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--ink);
+  border-color: var(--axis);
+}
+
+.chip[aria-selected="true"] {
+  color: var(--ink);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.info {
+  margin: 8px 0 0;
+  color: var(--ink-2);
+}
+
+.bear-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 10px 0 0;
+}
+
+.bear-bar .group-label {
+  margin-right: 2px;
+}
+
+.bear-chip {
+  padding: 4px 10px;
+  border: 1px solid rgba(229, 72, 77, 0.55);
+  border-radius: 999px;
+  background: var(--bear-wash);
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.bear-chip:hover {
+  border-color: var(--bear);
+}
+
+.bear-chip:focus-visible {
+  outline: 2px solid var(--bear);
+  outline-offset: 2px;
+}
+
+.bear-none {
+  color: var(--muted);
+}
+
+.hint {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.charts.one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.card {
+  min-width: 0;
+  padding: 10px 6px 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.card h2 {
+  margin: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card .plot {
+  height: 330px;
+}
+
+.charts.one .card .plot {
+  height: 580px;
+}
+
+.table-view {
+  margin-top: 18px;
+}
+
+.table-view summary {
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--grid);
+  text-align: right;
+  white-space: nowrap;
+}
+
+th {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.key {
+  display: inline-block;
+  width: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+
+.range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sec {
+  width: 84px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--page);
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.sec:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.tilde,
+.unit {
+  color: var(--muted);
+}
+
+.card-range {
+  margin: 2px 10px 8px;
+}
+
+.card-range .sec {
+  width: 76px;
+}
+
+.stats-mini {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.stats-mini th,
+.stats-mini td {
+  padding: 3px 10px;
+}
+
+.stats-mini tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.statbtn {
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.statbtn:hover:enabled {
+  border-color: var(--axis);
+}
+
+.statbtn[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.statbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.statbtn:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.sep-intro {
+  margin: 4px 0 14px;
+  color: var(--ink-2);
+}
+
+.sep-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.sep-card {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.sep-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+
+.sep-name {
+  font-size: 15px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.sep-meta {
+  color: var(--ink-2);
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  color: var(--ink-2);
+}
+
+.badge.bear {
+  border-color: rgba(229, 72, 77, 0.55);
+  background: var(--bear-wash);
+  color: var(--ink);
+}
+
+.sep-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+
+.btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--page);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.btn:hover:enabled {
+  border-color: var(--accent);
+}
+
+.btn.primary {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.btn.bear {
+  border-color: rgba(229, 72, 77, 0.6);
+  background: var(--bear-wash);
+}
+
+.btn.bear:hover:enabled {
+  border-color: var(--bear);
+}
+
+.btn:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn.remove {
+  margin-left: auto;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.sep-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.sep-table {
+  margin-top: 10px;
+}
+
+.sec-tag {
+  display: inline-block;
+  min-width: 42px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--bear-wash);
+  color: var(--ink);
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .top,
+  main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+</style>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="title-row">
+    <div>
+      <h1>CS-Viewer</h1>
+      <p class="sub" id="tab-sub">地上局のCSV（GS_000.csv など）から、ノード間の電波強度と熊速報をグラフにします</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="機能の切り替え">
+      <button type="button" class="tab" role="tab" id="tab-btn-graph" data-tab="graph" aria-controls="tab-graph" aria-selected="true">グラフ</button>
+      <button type="button" class="tab" role="tab" id="tab-btn-split" data-tab="split" aria-controls="tab-split" aria-selected="false">データ分離</button>
+    </nav>
+  </div>
+</header>
+<main>
+  <div id="tab-graph" role="tabpanel" aria-labelledby="tab-btn-graph">
+    <section class="load">
+      <label id="drop" class="drop" for="file">
+        <input id="file" type="file" accept=".csv,text/csv" multiple>
+        <span class="drop-main">CSVファイルをここにドラッグ＆ドロップ</span>
+        <span class="drop-sub">またはクリックして選択（複数可）。熊速報の列がある新しいCSVも、ない以前のCSVも読めます</span>
+      </label>
+      <p id="error" class="error" role="alert" hidden></p>
+    </section>
+    <section id="viewer" hidden>
+      <div class="controls">
+        <div class="group">
+          <span class="group-label">ファイル</span>
+          <div id="files" class="chips" role="tablist" aria-label="読み込んだファイル"></div>
+        </div>
+        <div class="group">
+          <span class="group-label">グラフ</span>
+          <div class="chips" role="tablist" aria-label="グラフの分け方">
+            <button type="button" class="chip" role="tab" data-view="pair" aria-selected="true">ペア別（6）</button>
+            <button type="button" class="chip" role="tab" data-view="all" aria-selected="false">全体（1）</button>
+            <button type="button" class="chip" role="tab" data-view="node" aria-selected="false">測定ノード別（4）</button>
+          </div>
+        </div>
+        <div class="group">
+          <span class="group-label">区間</span>
+          <div class="range">
+            <input id="t0" class="sec" type="number" step="0.1" aria-label="全グラフの開始秒">
+            <span class="tilde">〜</span>
+            <input id="t1" class="sec" type="number" step="0.1" aria-label="全グラフの終了秒">
+            <span class="unit">秒</span>
+          </div>
+        </div>
+      </div>
+      <p id="info" class="info"></p>
+      <div id="bears" class="bear-bar" aria-label="熊速報の一覧"></div>
+      <p class="hint">ドラッグで拡大、ダブルクリックで元に戻す。凡例をクリックすると線の表示・非表示を切り替えます。グラフの下の値をクリックすると、その高さに線を引きます（複数可、もう一度押すと消えます）。赤い帯は熊速報の遮蔽区間、▼は地上局が速報を受け取った時刻です。上の熊速報をクリックすると、その前後に拡大します。</p>
+      <div id="charts" class="charts"></div>
+      <details class="table-view">
+        <summary>数値の表（各リンクの平均・最小・最大）</summary>
+        <div class="table-wrap"><table id="stats"></table></div>
+      </details>
+    </section>
+  </div>
+  <div id="tab-split" role="tabpanel" aria-labelledby="tab-btn-split" hidden>
+    <p class="sep-intro">CSVを読み込むと、<b>電波強度だけのCSV</b>（元の14列：time_s,gw,A-&gt;B,…,D-&gt;C）と<b>熊速報だけのCSV</b>（time_s,gw,bear,bear_start_s,bear_len_s,bear_drop_db）に分けて保存できます。グラフの画面とは別に動きます。</p>
+    <label id="sep-drop" class="drop" for="sep-file">
+      <input id="sep-file" type="file" accept=".csv,text/csv" multiple>
+      <span class="drop-main">分けたいCSVファイルをここにドラッグ＆ドロップ</span>
+      <span class="drop-sub">またはクリックして選択（複数可）</span>
+    </label>
+    <p id="sep-error" class="error" role="alert" hidden></p>
+    <div id="sep-list" class="sep-list"></div>
+  </div>
+</main>
+<script>
+(function () {
+  'use strict';
+
+  const NODES = ['A', 'B', 'C', 'D'];
+  const LINKS = [];
+  NODES.forEach(function (a, i) {
+    NODES.forEach(function (b, j) {
+      if (i !== j) {
+        LINKS.push({ key: a + '->' + b, from: i, to: j });
+      }
+    });
+  });
+  const HEADER = ['time_s', 'gw'].concat(LINKS.map(function (l) { return l.key; }));
+  const BEAR_COLS = ['bear', 'bear_start_s', 'bear_len_s', 'bear_drop_db'];
+  const HEADER_BEAR = HEADER.concat(BEAR_COLS);
+  const BEAR_OUT_HEADER = ['time_s', 'gw'].concat(BEAR_COLS);
+  const BEAR_ZOOM_PAD = 5;
+
+  const SERIES = ['#3987e5', '#d95926', '#199e70'];
+  const HUE = {
+    'A->B': 0, 'A->C': 1, 'A->D': 2,
+    'B->A': 1, 'B->C': 0, 'B->D': 2,
+    'C->A': 2, 'C->B': 1, 'C->D': 0,
+    'D->A': 0, 'D->B': 1, 'D->C': 2
+  };
+  const DASH = ['solid', 'dot', 'dash', 'dashdot'];
+  const DASH_LABEL = ['実線', '点線', '破線', '一点鎖線'];
+  const GAP_S = 0.5;
+
+  const THEME = {
+    page: '#0d0d0d',
+    surface: '#1a1a19',
+    ink: '#ffffff',
+    ink2: '#c3c2b7',
+    muted: '#898781',
+    grid: '#2c2c2a',
+    axis: '#383835',
+    border: 'rgba(255,255,255,0.10)',
+    bear: '#e5484d',
+    bearBand: 'rgba(229,72,77,0.20)',
+    bearLabel: 'rgba(229,72,77,0.88)',
+    font: 'system-ui, -apple-system, "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif'
+  };
+
+  const PLOT_CONFIG = {
+    responsive: true,
+    displaylogo: false,
+    scrollZoom: false,
+    modeBarButtonsToRemove: ['toImage', 'select2d', 'lasso2d', 'autoScale2d']
+  };
+
+  const els = {
+    drop: document.getElementById('drop'),
+    input: document.getElementById('file'),
+    error: document.getElementById('error'),
+    viewer: document.getElementById('viewer'),
+    files: document.getElementById('files'),
+    info: document.getElementById('info'),
+    bears: document.getElementById('bears'),
+    charts: document.getElementById('charts'),
+    stats: document.getElementById('stats'),
+    t0: document.getElementById('t0'),
+    t1: document.getElementById('t1'),
+    viewButtons: Array.prototype.slice.call(document.querySelectorAll('[data-view]')),
+    tabButtons: Array.prototype.slice.call(document.querySelectorAll('[data-tab]')),
+    tabGraph: document.getElementById('tab-graph'),
+    tabSplit: document.getElementById('tab-split'),
+    tabSub: document.getElementById('tab-sub'),
+    sepDrop: document.getElementById('sep-drop'),
+    sepInput: document.getElementById('sep-file'),
+    sepError: document.getElementById('sep-error'),
+    sepList: document.getElementById('sep-list')
+  };
+
+  const state = {
+    files: [],
+    current: -1,
+    view: 'pair',
+    plots: [],
+    charts: [],
+    range: { t0: 0, t1: 0 },
+    rangeFile: null,
+    syncing: false
+  };
+
+  const STATS = [
+    { key: 'mean', label: '平均' },
+    { key: 'median', label: '中央値' },
+    { key: 'min', label: '最小' },
+    { key: 'max', label: '最大' }
+  ];
+
+  const TAB_SUB = {
+    graph: '地上局のCSV（GS_000.csv など）から、ノード間の電波強度と熊速報をグラフにします',
+    split: '地上局のCSVを、電波強度のCSVと熊速報のCSVに分けて保存します'
+  };
+
+  function sameList(a, b) {
+    return a.length === b.length && a.every(function (h, i) { return h === b[i]; });
+  }
+
+  function headerKind(head) {
+    if (sameList(head, HEADER)) {
+      return 'plain';
+    }
+    if (sameList(head, HEADER_BEAR)) {
+      return 'bear';
+    }
+    return null;
+  }
+
+  function splitLine(line) {
+    return line.split(',').map(function (s) { return s.trim(); });
+  }
+
+  function readBear(f, time, gw) {
+    if (f[14] === '' && f[15] === '' && f[16] === '' && f[17] === '') {
+      return null;
+    }
+    const m = /^([A-D])-([A-D])$/.exec(f[14]);
+    const start = Number(f[15]);
+    const len = Number(f[16]);
+    const drop = f[17] === '' ? null : Number(f[17]);
+    if (!m || m[1] === m[2] || f[15] === '' || f[16] === '' || !Number.isFinite(start) || !Number.isFinite(len) || len < 0 || (drop !== null && !Number.isFinite(drop))) {
+      return 'bad';
+    }
+    const a = Math.min(NODES.indexOf(m[1]), NODES.indexOf(m[2]));
+    const b = Math.max(NODES.indexOf(m[1]), NODES.indexOf(m[2]));
+    return {
+      t: time,
+      gw: gw,
+      sec: NODES[a] + '-' + NODES[b],
+      a: a,
+      b: b,
+      start: start,
+      len: len,
+      end: start + len,
+      drop: drop
+    };
+  }
+
+  function showMessage(text) {
+    els.error.textContent = text;
+    els.error.hidden = !text;
+  }
+
+  function parseCsv(text) {
+    const lines = text.replace(/^﻿/, '').split(/\r?\n/);
+    const head = splitLine(lines[0] || '');
+    const kind = headerKind(head);
+    if (!kind) {
+      throw new Error('1行目の列名が地上局のCSV（time_s,gw,A->B,…,D->C、または末尾に bear,bear_start_s,bear_len_s,bear_drop_db が付いたもの）と一致しません。');
+    }
+    const width = head.length;
+    const t = [];
+    const gw = [];
+    const cols = LINKS.map(function () { return []; });
+    const events = [];
+    let skipped = 0;
+    let badBear = 0;
+    for (let n = 1; n < lines.length; n++) {
+      const line = lines[n].trim();
+      if (!line) {
+        continue;
+      }
+      const f = splitLine(line);
+      if (f.length !== width || f.slice(0, HEADER.length).some(function (s) { return s === ''; })) {
+        skipped++;
+        continue;
+      }
+      const time = Number(f[0]);
+      const vals = f.slice(2, HEADER.length).map(Number);
+      const valid = Number.isFinite(time) && NODES.indexOf(f[1]) >= 0 && vals.every(Number.isFinite);
+      if (!valid) {
+        skipped++;
+        continue;
+      }
+      t.push(time);
+      gw.push(f[1]);
+      vals.forEach(function (v, k) { cols[k].push(v); });
+      if (kind === 'bear') {
+        const ev = readBear(f, time, f[1]);
+        if (ev === 'bad') {
+          badBear++;
+        } else if (ev) {
+          events.push(ev);
+        }
+      }
+    }
+    if (t.length === 0) {
+      throw new Error('データの行がありません。');
+    }
+    return { t: t, gw: gw, cols: cols, skipped: skipped, hasBear: kind === 'bear', events: events, badBear: badBear };
+  }
+
+  function findSwitches(data) {
+    const out = [];
+    for (let i = 1; i < data.t.length; i++) {
+      if (data.gw[i] !== data.gw[i - 1]) {
+        out.push({ t: data.t[i], from: data.gw[i - 1], to: data.gw[i] });
+      }
+    }
+    return out;
+  }
+
+  function withGaps(data) {
+    const x = [];
+    const cols = data.cols.map(function () { return []; });
+    for (let i = 0; i < data.t.length; i++) {
+      if (i > 0 && data.t[i] - data.t[i - 1] > GAP_S) {
+        x.push((data.t[i] + data.t[i - 1]) / 2);
+        cols.forEach(function (c) { c.push(null); });
+      }
+      x.push(data.t[i]);
+      cols.forEach(function (c, k) { c.push(data.cols[k][i]); });
+    }
+    return { x: x, cols: cols };
+  }
+
+  function summarize(data) {
+    let min = Infinity;
+    let max = -Infinity;
+    const links = data.cols.map(function (col) {
+      let sum = 0;
+      let count = 0;
+      let lo = Infinity;
+      let hi = -Infinity;
+      let zeros = 0;
+      for (let i = 0; i < col.length; i++) {
+        const v = col[i];
+        if (v < min) { min = v; }
+        if (v > max) { max = v; }
+        if (v === 0) {
+          zeros++;
+          continue;
+        }
+        sum += v;
+        count++;
+        if (v < lo) { lo = v; }
+        if (v > hi) { hi = v; }
+      }
+      return {
+        mean: count ? sum / count : null,
+        min: count ? lo : null,
+        max: count ? hi : null,
+        zeros: zeros
+      };
+    });
+    return { min: min, max: max, links: links };
+  }
+
+  function fmt(v) {
+    return v.toFixed(1);
+  }
+
+  function statsIn(file, k, t0, t1) {
+    const t = file.data.t;
+    const col = file.data.cols[k];
+    const vals = [];
+    for (let i = 0; i < t.length; i++) {
+      if (t[i] < t0 || t[i] > t1 || col[i] === 0) {
+        continue;
+      }
+      vals.push(col[i]);
+    }
+    if (!vals.length) {
+      return null;
+    }
+    vals.sort(function (a, b) { return a - b; });
+    let sum = 0;
+    for (let i = 0; i < vals.length; i++) {
+      sum += vals[i];
+    }
+    const h = vals.length >> 1;
+    return {
+      mean: sum / vals.length,
+      median: vals.length % 2 ? vals[h] : (vals[h - 1] + vals[h]) / 2,
+      min: vals[0],
+      max: vals[vals.length - 1]
+    };
+  }
+
+  function uniqueName(name) {
+    const taken = state.files.map(function (f) { return f.name; });
+    if (taken.indexOf(name) < 0) {
+      return name;
+    }
+    let k = 2;
+    while (taken.indexOf(name + ' (' + k + ')') >= 0) {
+      k++;
+    }
+    return name + ' (' + k + ')';
+  }
+
+  async function addFiles(fileList) {
+    const messages = [];
+    const list = Array.prototype.slice.call(fileList || []);
+    for (const file of list) {
+      try {
+        const text = await file.text();
+        const data = parseCsv(text);
+        state.files.push({
+          name: uniqueName(file.name),
+          data: data,
+          plot: withGaps(data),
+          switches: findSwitches(data),
+          summary: summarize(data)
+        });
+        state.current = state.files.length - 1;
+        if (data.skipped) {
+          messages.push(file.name + '：形式が合わない行を ' + data.skipped + ' 行とばしました。');
+        }
+        if (data.badBear) {
+          messages.push(file.name + '：熊速報の値が読めない行が ' + data.badBear + ' 行ありました（電波強度は表示しています）。');
+        }
+      } catch (err) {
+        messages.push(file.name + '：読み込めませんでした。' + err.message);
+      }
+    }
+    showMessage(messages.join('\n'));
+    render();
+  }
+
+  function chartGroups() {
+    const byKey = {};
+    LINKS.forEach(function (l, k) { byKey[l.key] = k; });
+    if (state.view === 'all') {
+      return [{ title: '全12リンク', links: LINKS.map(function (l, k) { return k; }) }];
+    }
+    if (state.view === 'node') {
+      return NODES.map(function (a, i) {
+        return {
+          title: a + ' が測定した値',
+          links: NODES.filter(function (b, j) { return j !== i; }).map(function (b) { return byKey[a + '->' + b]; })
+        };
+      });
+    }
+    const groups = [];
+    for (let i = 0; i < NODES.length; i++) {
+      for (let j = i + 1; j < NODES.length; j++) {
+        groups.push({
+          title: NODES[i] + ' ↔ ' + NODES[j],
+          links: [byKey[NODES[i] + '->' + NODES[j]], byKey[NODES[j] + '->' + NODES[i]]]
+        });
+      }
+    }
+    return groups;
+  }
+
+  function eventsFor(file, links) {
+    return file.data.events.filter(function (ev) {
+      return links.some(function (k) {
+        const l = LINKS[k];
+        return (l.from === ev.a && l.to === ev.b) || (l.from === ev.b && l.to === ev.a);
+      });
+    });
+  }
+
+  function traceFor(file, k) {
+    const link = LINKS[k];
+    const all = state.view === 'all';
+    return {
+      type: 'scattergl',
+      mode: 'lines',
+      name: all ? link.key + '（' + DASH_LABEL[link.from] + '）' : link.key,
+      x: file.plot.x,
+      y: file.plot.cols[k],
+      line: {
+        color: SERIES[HUE[link.key]],
+        width: 2,
+        dash: all ? DASH[link.from] : 'solid'
+      },
+      hovertemplate: '<b>%{y} dBm</b>  ' + link.key + '<extra></extra>'
+    };
+  }
+
+  function bearText(ev) {
+    return '熊速報 ' + ev.sec + '<br>遮蔽 ' + fmt(ev.start) + '〜' + fmt(ev.end) + ' 秒（' + fmt(ev.len) + ' 秒）' +
+      (ev.drop === null ? '' : '<br>落ち込み ' + ev.drop + ' dB') + '<br>受信 ' + fmt(ev.t) + ' 秒（GW ' + ev.gw + '）';
+  }
+
+  function bearTrace(file, events) {
+    const y = file.summary.max + 2;
+    return {
+      type: 'scatter',
+      mode: 'markers',
+      name: '熊速報（受信時刻）',
+      x: events.map(function (ev) { return ev.t; }),
+      y: events.map(function () { return y; }),
+      text: events.map(bearText),
+      marker: { symbol: 'triangle-down', size: 11, color: THEME.bear, line: { color: THEME.page, width: 1 } },
+      cliponaxis: false,
+      hovertemplate: '%{text}<extra></extra>'
+    };
+  }
+
+  function layoutFor(file, events) {
+    const all = state.view === 'all';
+    const s = file.summary;
+    const pad = 3;
+    const yRange = [s.min - pad, s.max + pad];
+    const shapes = events.map(function (ev) {
+      return {
+        type: 'rect',
+        xref: 'x',
+        yref: 'paper',
+        x0: ev.start,
+        x1: ev.end,
+        y0: 0,
+        y1: 1,
+        layer: 'below',
+        fillcolor: THEME.bearBand,
+        line: { width: 0 }
+      };
+    }).concat(file.switches.map(function (sw) {
+      return {
+        type: 'line',
+        xref: 'x',
+        yref: 'paper',
+        x0: sw.t,
+        x1: sw.t,
+        y0: 0,
+        y1: 1,
+        line: { color: THEME.ink2, width: 1 }
+      };
+    }));
+    const annotations = events.map(function (ev) {
+      return {
+        x: ev.start,
+        xref: 'x',
+        y: 0,
+        yref: 'paper',
+        yanchor: 'bottom',
+        xanchor: 'left',
+        xshift: 2,
+        yshift: 2,
+        showarrow: false,
+        text: '🐻 ' + ev.sec,
+        font: { color: '#ffffff', size: 11, family: THEME.font },
+        bgcolor: THEME.bearLabel,
+        borderpad: 2
+      };
+    }).concat(file.switches.map(function (sw) {
+      return {
+        x: sw.t,
+        xref: 'x',
+        y: 1,
+        yref: 'paper',
+        yanchor: 'top',
+        xanchor: 'left',
+        xshift: 4,
+        showarrow: false,
+        text: 'GW: ' + sw.from + '→' + sw.to,
+        font: { color: THEME.ink, size: 11, family: THEME.font },
+        bgcolor: THEME.surface
+      };
+    }));
+    const axisBase = {
+      gridcolor: THEME.grid,
+      gridwidth: 1,
+      linecolor: THEME.axis,
+      linewidth: 1,
+      showline: true,
+      zeroline: false,
+      tickfont: { color: THEME.muted, size: 11 },
+      title: { font: { color: THEME.muted, size: 12 } }
+    };
+    return {
+      paper_bgcolor: THEME.surface,
+      plot_bgcolor: THEME.surface,
+      font: { family: THEME.font, color: THEME.ink2, size: 12 },
+      margin: all ? { l: 60, r: 10, t: 16, b: 48 } : { l: 60, r: 14, t: 36, b: 48 },
+      hovermode: 'x unified',
+      hoverlabel: {
+        bgcolor: THEME.page,
+        bordercolor: THEME.border,
+        font: { color: THEME.ink, family: THEME.font, size: 12 }
+      },
+      dragmode: 'zoom',
+      showlegend: true,
+      legend: all
+        ? { orientation: 'v', x: 1.01, xanchor: 'left', y: 1, yanchor: 'top', font: { color: THEME.ink2, size: 12 }, bgcolor: 'rgba(0,0,0,0)' }
+        : { orientation: 'h', x: 0, xanchor: 'left', y: 1.02, yanchor: 'bottom', font: { color: THEME.ink2, size: 12 }, bgcolor: 'rgba(0,0,0,0)' },
+      xaxis: Object.assign({}, axisBase, {
+        title: Object.assign({}, axisBase.title, { text: '時刻 [s]' }),
+        hoverformat: '.1f',
+        showspikes: true,
+        spikemode: 'across',
+        spikesnap: 'cursor',
+        spikecolor: THEME.muted,
+        spikethickness: 1,
+        spikedash: 'solid'
+      }),
+      yaxis: Object.assign({}, axisBase, {
+        title: Object.assign({}, axisBase.title, { text: 'RSSI [dBm]' }),
+        range: yRange
+      }),
+      shapes: shapes,
+      annotations: annotations
+    };
+  }
+
+  function clearPlots() {
+    state.plots.forEach(function (el) {
+      if (window.Plotly) {
+        Plotly.purge(el);
+      }
+    });
+    state.plots = [];
+    els.charts.textContent = '';
+  }
+
+  function syncX(source, ev) {
+    if (state.syncing || state.plots.length < 2) {
+      return;
+    }
+    let update = null;
+    if (ev['xaxis.autorange']) {
+      update = { 'xaxis.autorange': true };
+    } else if (ev['xaxis.range[0]'] !== undefined && ev['xaxis.range[1]'] !== undefined) {
+      update = { 'xaxis.range': [ev['xaxis.range[0]'], ev['xaxis.range[1]']] };
+    } else if (Array.isArray(ev['xaxis.range'])) {
+      update = { 'xaxis.range': ev['xaxis.range'].slice() };
+    }
+    if (!update) {
+      return;
+    }
+    state.syncing = true;
+    const jobs = state.plots
+      .filter(function (el) { return el !== source; })
+      .map(function (el) { return Plotly.relayout(el, update); });
+    Promise.all(jobs).then(function () { state.syncing = false; }, function () { state.syncing = false; });
+  }
+
+  function zoomAll(x0, x1) {
+    state.syncing = true;
+    const jobs = state.plots.map(function (el) { return Plotly.relayout(el, { 'xaxis.range': [x0, x1] }); });
+    Promise.all(jobs).then(function () { state.syncing = false; }, function () { state.syncing = false; });
+  }
+
+  function makeRange(title) {
+    const wrap = document.createElement('div');
+    wrap.className = 'range card-range';
+    const a = document.createElement('input');
+    const b = document.createElement('input');
+    [a, b].forEach(function (el, i) {
+      el.type = 'number';
+      el.step = '0.1';
+      el.className = 'sec';
+      el.setAttribute('aria-label', title + (i === 0 ? ' の開始秒' : ' の終了秒'));
+    });
+    const tilde = document.createElement('span');
+    tilde.className = 'tilde';
+    tilde.textContent = '〜';
+    const unit = document.createElement('span');
+    unit.className = 'unit';
+    unit.textContent = '秒';
+    wrap.appendChild(a);
+    wrap.appendChild(tilde);
+    wrap.appendChild(b);
+    wrap.appendChild(unit);
+    return { wrap: wrap, a: a, b: b };
+  }
+
+  function chartRange(entry, file) {
+    const t = file.data.t;
+    const a = Number(entry.range.a.value);
+    const b = Number(entry.range.b.value);
+    const lo = Number.isFinite(a) ? a : t[0];
+    const hi = Number.isFinite(b) ? b : t[t.length - 1];
+    return lo <= hi ? [lo, hi] : [hi, lo];
+  }
+
+  function applyShapes(entry) {
+    const shapes = entry.base.shapes.slice();
+    const annotations = entry.base.annotations.slice();
+    Object.keys(entry.selected).forEach(function (id) {
+      const k = Number(id.split('|')[0]);
+      const s = entry.stats[k];
+      if (!s) {
+        return;
+      }
+      const v = s[id.split('|')[1]];
+      const color = SERIES[HUE[LINKS[k].key]];
+      shapes.push({
+        type: 'line',
+        xref: 'paper',
+        x0: 0,
+        x1: 1,
+        yref: 'y',
+        y0: v,
+        y1: v,
+        line: { color: color, width: 1 }
+      });
+      annotations.push({
+        xref: 'paper',
+        x: 1,
+        xanchor: 'right',
+        yref: 'y',
+        y: v,
+        yanchor: 'bottom',
+        showarrow: false,
+        text: LINKS[k].key + ' ' + entry.selected[id] + ' ' + fmt(v),
+        font: { color: THEME.ink, size: 11, family: THEME.font },
+        bgcolor: THEME.surface
+      });
+    });
+    Plotly.relayout(entry.plot, { shapes: shapes, annotations: annotations });
+  }
+
+  function renderStatsTable(entry, file) {
+    const range = chartRange(entry, file);
+    entry.stats = {};
+    entry.table.textContent = '';
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    hr.appendChild(cell('th', 'リンク'));
+    STATS.forEach(function (s) { hr.appendChild(cell('th', s.label + ' [dBm]')); });
+    thead.appendChild(hr);
+    const tbody = document.createElement('tbody');
+    entry.links.forEach(function (k) {
+      const link = LINKS[k];
+      const s = statsIn(file, k, range[0], range[1]);
+      entry.stats[k] = s;
+      const tr = document.createElement('tr');
+      const name = document.createElement('td');
+      const key = document.createElement('span');
+      key.className = 'key';
+      key.style.borderTopColor = SERIES[HUE[link.key]];
+      name.appendChild(key);
+      name.appendChild(document.createTextNode(link.key));
+      tr.appendChild(name);
+      STATS.forEach(function (st) {
+        const id = k + '|' + st.key;
+        const td = document.createElement('td');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'statbtn';
+        if (s) {
+          b.textContent = fmt(s[st.key]);
+          b.setAttribute('aria-pressed', String(Object.prototype.hasOwnProperty.call(entry.selected, id)));
+          b.addEventListener('click', function () {
+            if (Object.prototype.hasOwnProperty.call(entry.selected, id)) {
+              delete entry.selected[id];
+              b.setAttribute('aria-pressed', 'false');
+            } else {
+              entry.selected[id] = st.label;
+              b.setAttribute('aria-pressed', 'true');
+            }
+            applyShapes(entry);
+          });
+        } else {
+          b.textContent = '—';
+          b.disabled = true;
+          delete entry.selected[id];
+        }
+        td.appendChild(b);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    entry.table.appendChild(thead);
+    entry.table.appendChild(tbody);
+    applyShapes(entry);
+  }
+
+  function renderCharts(file) {
+    clearPlots();
+    const groups = chartGroups();
+    els.charts.classList.toggle('one', groups.length === 1);
+    state.charts = [];
+    groups.forEach(function (g) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const h = document.createElement('h2');
+      h.textContent = g.title;
+      const plot = document.createElement('div');
+      plot.className = 'plot';
+      const range = makeRange(g.title);
+      const table = document.createElement('table');
+      table.className = 'stats-mini';
+      card.appendChild(h);
+      card.appendChild(plot);
+      card.appendChild(range.wrap);
+      card.appendChild(table);
+      els.charts.appendChild(card);
+      const events = eventsFor(file, g.links);
+      const traces = g.links.map(function (k) { return traceFor(file, k); });
+      if (events.length) {
+        traces.push(bearTrace(file, events));
+      }
+      const layout = layoutFor(file, events);
+      Plotly.newPlot(plot, traces, layout, PLOT_CONFIG);
+      plot.on('plotly_relayout', function (ev) { syncX(plot, ev); });
+      const entry = {
+        plot: plot,
+        links: g.links,
+        table: table,
+        range: range,
+        base: { shapes: layout.shapes.slice(), annotations: layout.annotations.slice() },
+        selected: {},
+        stats: {}
+      };
+      range.a.value = fmt(state.range.t0);
+      range.b.value = fmt(state.range.t1);
+      [range.a, range.b].forEach(function (el) {
+        el.addEventListener('change', function () { renderStatsTable(entry, file); });
+      });
+      state.charts.push(entry);
+      state.plots.push(plot);
+      renderStatsTable(entry, file);
+    });
+  }
+
+  function renderInfo(file) {
+    const d = file.data;
+    const first = d.gw[0];
+    let gwText = 'GW: ' + first;
+    if (file.switches.length) {
+      gwText += ' → ' + file.switches.map(function (s) { return s.to; }).join(' → ') + '（切替 ' + file.switches.length + ' 回）';
+    }
+    const bearInfo = d.hasBear ? '熊速報 ' + d.events.length + ' 件' : '熊速報の列なし（以前の形式）';
+    els.info.textContent = [
+      file.name,
+      d.t.length.toLocaleString('ja-JP') + ' 行',
+      d.t[0].toFixed(1) + '〜' + d.t[d.t.length - 1].toFixed(1) + ' 秒',
+      gwText,
+      bearInfo
+    ].join('　｜　');
+  }
+
+  function renderBears(file) {
+    const d = file.data;
+    els.bears.textContent = '';
+    if (!d.hasBear) {
+      els.bears.hidden = true;
+      return;
+    }
+    els.bears.hidden = false;
+    const label = document.createElement('span');
+    label.className = 'group-label';
+    label.textContent = '熊速報';
+    els.bears.appendChild(label);
+    if (!d.events.length) {
+      const none = document.createElement('span');
+      none.className = 'bear-none';
+      none.textContent = 'なし';
+      els.bears.appendChild(none);
+      return;
+    }
+    d.events.forEach(function (ev) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bear-chip';
+      b.textContent = '🐻 ' + ev.sec + '　' + fmt(ev.start) + '〜' + fmt(ev.end) + ' 秒' + (ev.drop === null ? '' : '　' + ev.drop + ' dB');
+      b.title = bearText(ev).replace(/<br>/g, '\n') + '\nクリックでこの前後に拡大';
+      b.addEventListener('click', function () {
+        zoomAll(ev.start - BEAR_ZOOM_PAD, Math.max(ev.end, ev.t) + BEAR_ZOOM_PAD);
+      });
+      els.bears.appendChild(b);
+    });
+  }
+
+  function cell(tag, text) {
+    const c = document.createElement(tag);
+    c.textContent = text;
+    return c;
+  }
+
+  function renderStats(file) {
+    els.stats.textContent = '';
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    ['リンク', '平均 [dBm]（0を除く）', '最小 [dBm]', '最大 [dBm]', '0 の行数'].forEach(function (t) {
+      hr.appendChild(cell('th', t));
+    });
+    thead.appendChild(hr);
+    const tbody = document.createElement('tbody');
+    LINKS.forEach(function (link, k) {
+      const s = file.summary.links[k];
+      const tr = document.createElement('tr');
+      const name = document.createElement('td');
+      const key = document.createElement('span');
+      key.className = 'key';
+      key.style.borderTopColor = SERIES[HUE[link.key]];
+      name.appendChild(key);
+      name.appendChild(document.createTextNode(link.key));
+      tr.appendChild(name);
+      tr.appendChild(cell('td', s.mean === null ? '—' : s.mean.toFixed(1)));
+      tr.appendChild(cell('td', s.min === null ? '—' : String(s.min)));
+      tr.appendChild(cell('td', s.max === null ? '—' : String(s.max)));
+      tr.appendChild(cell('td', s.zeros.toLocaleString('ja-JP')));
+      tbody.appendChild(tr);
+    });
+    els.stats.appendChild(thead);
+    els.stats.appendChild(tbody);
+  }
+
+  function renderFileChips() {
+    els.files.textContent = '';
+    state.files.forEach(function (f, i) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(i === state.current));
+      b.textContent = f.name;
+      b.addEventListener('click', function () {
+        if (state.current !== i) {
+          state.current = i;
+          render();
+        }
+      });
+      els.files.appendChild(b);
+    });
+  }
+
+  function renderViewButtons() {
+    els.viewButtons.forEach(function (b) {
+      b.setAttribute('aria-selected', String(b.dataset.view === state.view));
+    });
+  }
+
+  function render() {
+    if (state.current < 0) {
+      els.viewer.hidden = true;
+      return;
+    }
+    els.viewer.hidden = false;
+    const file = state.files[state.current];
+    if (state.rangeFile !== file.name) {
+      state.rangeFile = file.name;
+      state.range = { t0: file.data.t[0], t1: file.data.t[file.data.t.length - 1] };
+    }
+    els.t0.value = fmt(state.range.t0);
+    els.t1.value = fmt(state.range.t1);
+    renderFileChips();
+    renderViewButtons();
+    renderInfo(file);
+    renderBears(file);
+    renderStats(file);
+    renderCharts(file);
+  }
+
+  function setupDropZone(zone, input, onFiles) {
+    ['dragenter', 'dragover'].forEach(function (type) {
+      zone.addEventListener(type, function (e) {
+        e.preventDefault();
+        zone.classList.add('over');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (type) {
+      zone.addEventListener(type, function (e) {
+        e.preventDefault();
+        zone.classList.remove('over');
+      });
+    });
+    zone.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files.length) {
+        onFiles(e.dataTransfer.files);
+      }
+    });
+    input.addEventListener('change', function () {
+      const picked = input.files;
+      Promise.resolve(onFiles(picked)).then(function () { input.value = ''; });
+    });
+  }
+
+  function setupDrop() {
+    setupDropZone(els.drop, els.input, addFiles);
+  }
+
+  function setupRange() {
+    [els.t0, els.t1].forEach(function (el) {
+      el.addEventListener('change', function () {
+        const a = Number(els.t0.value);
+        const b = Number(els.t1.value);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) {
+          return;
+        }
+        state.range = { t0: Math.min(a, b), t1: Math.max(a, b) };
+        els.t0.value = fmt(state.range.t0);
+        els.t1.value = fmt(state.range.t1);
+        const file = state.files[state.current];
+        if (!file) {
+          return;
+        }
+        state.charts.forEach(function (entry) {
+          entry.range.a.value = els.t0.value;
+          entry.range.b.value = els.t1.value;
+          renderStatsTable(entry, file);
+        });
+      });
+    });
+  }
+
+  function setupViews() {
+    els.viewButtons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (state.view !== b.dataset.view) {
+          state.view = b.dataset.view;
+          render();
+        }
+      });
+    });
+  }
+
+  const sep = {
+    files: []
+  };
+
+  function sepMessage(text) {
+    els.sepError.textContent = text;
+    els.sepError.hidden = !text;
+  }
+
+  function splitCsv(text) {
+    const lines = text.replace(/^﻿/, '').split(/\r?\n/);
+    const head = splitLine(lines[0] || '');
+    const kind = headerKind(head);
+    if (!kind) {
+      throw new Error('1行目の列名が地上局のCSVと一致しません。');
+    }
+    const rssi = [HEADER.join(',')];
+    const bear = [BEAR_OUT_HEADER.join(',')];
+    const events = [];
+    let rows = 0;
+    let skipped = 0;
+    let badBear = 0;
+    for (let n = 1; n < lines.length; n++) {
+      const line = lines[n].trim();
+      if (!line) {
+        continue;
+      }
+      const f = splitLine(line);
+      if (f.length !== head.length || f.slice(0, HEADER.length).some(function (s) { return s === ''; })) {
+        skipped++;
+        continue;
+      }
+      rssi.push(f.slice(0, HEADER.length).join(','));
+      rows++;
+      if (kind !== 'bear') {
+        continue;
+      }
+      const ev = readBear(f, Number(f[0]), f[1]);
+      if (ev === 'bad') {
+        badBear++;
+      } else if (ev) {
+        events.push(ev);
+        bear.push([f[0], f[1]].concat(f.slice(HEADER.length)).join(','));
+      }
+    }
+    if (!rows) {
+      throw new Error('データの行がありません。');
+    }
+    return {
+      kind: kind,
+      rows: rows,
+      skipped: skipped,
+      badBear: badBear,
+      events: events,
+      rssiText: rssi.join('\r\n') + '\r\n',
+      bearText: bear.join('\r\n') + '\r\n'
+    };
+  }
+
+  function baseName(name) {
+    return name.replace(/\.csv$/i, '');
+  }
+
+  function saveText(name, text) {
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function sepButton(cls, main, sub, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn ' + cls;
+    const m = document.createElement('span');
+    m.textContent = main;
+    b.appendChild(m);
+    if (sub) {
+      const s = document.createElement('small');
+      s.textContent = sub;
+      b.appendChild(s);
+    }
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function renderSep() {
+    els.sepList.textContent = '';
+    sep.files.forEach(function (item, idx) {
+      const r = item.result;
+      const card = document.createElement('section');
+      card.className = 'sep-card';
+      card.setAttribute('aria-label', item.name);
+      const head = document.createElement('div');
+      head.className = 'sep-head';
+      const name = document.createElement('span');
+      name.className = 'sep-name';
+      name.textContent = item.name;
+      const badge = document.createElement('span');
+      badge.className = 'badge' + (r.kind === 'bear' ? ' bear' : '');
+      badge.textContent = r.kind === 'bear' ? '熊速報の列あり（18列）' : '熊速報の列なし（14列）';
+      const meta = document.createElement('span');
+      meta.className = 'sep-meta';
+      meta.textContent = r.rows.toLocaleString('ja-JP') + ' 行' + (r.kind === 'bear' ? '　｜　熊速報 ' + r.events.length + ' 件' : '');
+      head.appendChild(name);
+      head.appendChild(badge);
+      head.appendChild(meta);
+      card.appendChild(head);
+
+      const base = baseName(item.name);
+      const actions = document.createElement('div');
+      actions.className = 'sep-actions';
+      actions.appendChild(sepButton('primary', '電波強度CSVを保存', base + '_rssi.csv', function () {
+        saveText(base + '_rssi.csv', r.rssiText);
+      }));
+      const bearBtn = sepButton('bear', '熊速報CSVを保存', base + '_bear.csv', function () {
+        saveText(base + '_bear.csv', r.bearText);
+      });
+      if (r.kind !== 'bear') {
+        bearBtn.disabled = true;
+        bearBtn.title = '熊速報の列がないファイルです';
+      }
+      actions.appendChild(bearBtn);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'btn remove';
+      remove.textContent = '一覧から外す';
+      remove.addEventListener('click', function () {
+        sep.files.splice(idx, 1);
+        renderSep();
+      });
+      actions.appendChild(remove);
+      card.appendChild(actions);
+
+      const notes = [];
+      if (r.kind !== 'bear') {
+        notes.push('熊速報の列がない以前の形式のファイルです。電波強度CSVは元と同じ内容になります。');
+      } else if (!r.events.length) {
+        notes.push('熊速報はありません（熊速報CSVは列名の行だけになります）。');
+      }
+      if (r.skipped) {
+        notes.push('形式が合わない行を ' + r.skipped + ' 行とばしました。');
+      }
+      if (r.badBear) {
+        notes.push('熊速報の値が読めない行が ' + r.badBear + ' 行ありました（熊速報CSVには入れていません）。');
+      }
+      notes.forEach(function (t) {
+        const p = document.createElement('p');
+        p.className = 'sep-note';
+        p.textContent = t;
+        card.appendChild(p);
+      });
+
+      if (r.events.length) {
+        const wrap = document.createElement('div');
+        wrap.className = 'table-wrap sep-table';
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const hr = document.createElement('tr');
+        ['区間', '遮蔽の開始 [s]', '遮蔽の終了 [s]', '長さ [s]', '落ち込み [dB]', '受信時刻 [s]', 'GW'].forEach(function (t) {
+          hr.appendChild(cell('th', t));
+        });
+        thead.appendChild(hr);
+        const tbody = document.createElement('tbody');
+        r.events.forEach(function (ev) {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          const tag = document.createElement('span');
+          tag.className = 'sec-tag';
+          tag.textContent = ev.sec;
+          td.appendChild(tag);
+          tr.appendChild(td);
+          tr.appendChild(cell('td', fmt(ev.start)));
+          tr.appendChild(cell('td', fmt(ev.end)));
+          tr.appendChild(cell('td', fmt(ev.len)));
+          tr.appendChild(cell('td', ev.drop === null ? '—' : String(ev.drop)));
+          tr.appendChild(cell('td', fmt(ev.t)));
+          tr.appendChild(cell('td', ev.gw));
+          tbody.appendChild(tr);
+        });
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        card.appendChild(wrap);
+      }
+      els.sepList.appendChild(card);
+    });
+  }
+
+  async function addSepFiles(fileList) {
+    const messages = [];
+    const list = Array.prototype.slice.call(fileList || []);
+    for (const file of list) {
+      try {
+        const text = await file.text();
+        sep.files.push({ name: file.name, result: splitCsv(text) });
+      } catch (err) {
+        messages.push(file.name + '：読み込めませんでした。' + err.message);
+      }
+    }
+    sepMessage(messages.join('\n'));
+    renderSep();
+  }
+
+  function showTab(name) {
+    const tab = name === 'split' ? 'split' : 'graph';
+    els.tabButtons.forEach(function (b) {
+      b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+    });
+    els.tabGraph.hidden = tab !== 'graph';
+    els.tabSplit.hidden = tab !== 'split';
+    els.tabSub.textContent = TAB_SUB[tab];
+    if (tab === 'graph' && window.Plotly) {
+      state.plots.forEach(function (el) { Plotly.Plots.resize(el); });
+    }
+    if (location.hash !== '#' + tab) {
+      history.replaceState(null, '', '#' + tab);
+    }
+  }
+
+  function setupTabs() {
+    els.tabButtons.forEach(function (b) {
+      b.addEventListener('click', function () { showTab(b.dataset.tab); });
+    });
+    showTab(location.hash === '#split' ? 'split' : 'graph');
+  }
+
+  ['dragover', 'drop'].forEach(function (type) {
+    window.addEventListener(type, function (e) { e.preventDefault(); });
+  });
+  setupDropZone(els.sepDrop, els.sepInput, addSepFiles);
+  setupTabs();
+
+  if (typeof window.Plotly === 'undefined') {
+    showMessage('グラフ用ライブラリ（Plotly）を読み込めませんでした。インターネットにつながっているか確認してから、ページを再読み込みしてください。（データ分離の機能はこのままでも使えます）');
+    els.input.disabled = true;
+    return;
+  }
+
+  setupDrop();
+  setupViews();
+  setupRange();
+})();
+</script>
+</body>
+</html>
